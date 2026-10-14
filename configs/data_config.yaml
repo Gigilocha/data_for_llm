@@ -1,0 +1,72 @@
+# Данный конфиг содержит основные настройки данных.
+# ---------------------------------------------------------------------------------------------------------------
+
+# Настройки для pre-training датасетов
+pretrain:
+  seed: 42 
+
+  # Максмальный размер одного шарда в мегабайтах
+  shard_size_mb: 1024 
+
+  # Целевое количество токенов для финального датасета
+  target_tokens: 6000000
+
+  # Размер доли валидационного датасета
+  val_split_ratio: 0.00
+
+  # Общий запас на потери при очистке и дедупе
+  download:
+    overshoot: 2.0          
+
+  # Источники по языкам
+  languages:
+    # Русский язык
+    ru:
+      share: 0.6 # доля использования данного языка
+      profile: prose # метка типа данных (prose - естественный язык, code - язык программирования)
+      chars_per_token: 3.0 # грубая оценка количества символов за один token, дабы взять примерно равное соотношение
+      sources:
+        - {name: ru_web, 
+           kind: hf, # (hf/local/url)
+           location: HuggingFaceFW/fineweb-2,
+           subset: rus_Cyrl,
+           split: train,
+           text_field: text,
+           weight: 0.7,
+        }
+        - {name: ru_wikipedia, 
+           kind: hf,
+           location: wikimedia/wikipedia,
+           subset: 20231101.ru,
+           split: train,
+           text_field: text,
+           weight: 0.3
+        }
+
+    # Английский язык
+    en:
+      share: 0.2
+      profile: prose
+      chars_per_token: 3.0
+      sources:
+        - {name: en_web, 
+           kind: hf, # (hf/local/url)
+           location: HuggingFaceFW/fineweb,
+           split: train,
+           text_field: text,
+           weight: 1.0
+        }
+
+    # Язык программирования
+    python:
+      share: 0.2
+      profile: code
+      chars_per_token: 3.0
+      sources: 
+        - {name: python, 
+           kind: hf, # (hf/local/url)
+           location: HuggingFaceCode/stack-v3-train,
+           split: train,
+           text_field: text, 
+           weight: 1.0
+        }

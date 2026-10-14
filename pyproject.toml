@@ -1,0 +1,7 @@
+[project]
+name = "data-for-llm"
+version = "0.1.0"
+description = "Пайплайн подготовки датасета для обучения LLM"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
