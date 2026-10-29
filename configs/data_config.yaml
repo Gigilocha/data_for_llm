@@ -1,22 +1,11 @@
-# Данный конфиг содержит основные настройки данных.
-# ---------------------------------------------------------------------------------------------------------------
-
-# Настройки для pre-training датасетов
+# Настройки загрузки данных для pre-training датасетов
 pretrain:
   seed: 42 
-
-  # Максмальный размер одного шарда в мегабайтах
-  shard_size_mb: 1024 
-
-  # Целевое количество токенов для финального датасета
-  target_tokens: 6000000
-
-  # Размер доли валидационного датасета
-  val_split_ratio: 0.00
-
-  # Общий запас на потери при очистке и дедупе
-  download:
-    overshoot: 2.0          
+  shard_size_mb: 1024 # Максимальный размер одного шарда в мегабайтах
+  target_tokens: 6000000  # Целевое количество токенов для финального датасета
+  val_split_ratio: 0.01 # Размер доли валидационного датасета
+  split_salt: v1 # Соль разбивок
+  overshoot: 2.0 # Общий запас на потери при очистке и дедупе
 
   # Источники по языкам
   languages:
@@ -27,20 +16,24 @@ pretrain:
       chars_per_token: 3.0 # грубая оценка количества символов за один token, дабы взять примерно равное соотношение
       sources:
         - {name: ru_web, 
-           kind: hf, # (hf/local/url)
-           location: HuggingFaceFW/fineweb-2,
-           subset: rus_Cyrl,
-           split: train,
-           text_field: text,
-           weight: 0.7,
+          kind: hf, # (hf/local/url)
+          location: HuggingFaceFW/fineweb-2,
+          subset: rus_Cyrl,
+          split: train,
+          text_field: text,
+          revision: v2.1.1,
+          license: odc-by,
+          weight: 0.7,
         }
         - {name: ru_wikipedia, 
-           kind: hf,
-           location: wikimedia/wikipedia,
-           subset: 20231101.ru,
-           split: train,
-           text_field: text,
-           weight: 0.3
+          kind: hf,
+          location: wikimedia/wikipedia,
+          subset: 20231101.ru,
+          split: train,
+          text_field: text,
+          revision: 0d965f3311825ab36c803b9789fb7aab4eb6797f,
+          license: cc-by-sa-3.0,
+          weight: 0.3
         }
 
     # Английский язык
@@ -50,23 +43,27 @@ pretrain:
       chars_per_token: 3.0
       sources:
         - {name: en_web, 
-           kind: hf, # (hf/local/url)
-           location: HuggingFaceFW/fineweb,
-           split: train,
-           text_field: text,
-           weight: 1.0
+          kind: hf, # (hf/local/url)
+          location: HuggingFaceFW/fineweb,
+          split: train,
+          text_field: text,
+          revision: 3805dd7201cbe791430002605b9476a69ac9ebed,
+          license: odc-by,
+          weight: 1.0
         }
 
     # Язык программирования
-    python:
+    py:
       share: 0.2
       profile: code
       chars_per_token: 3.0
       sources: 
         - {name: python, 
-           kind: hf, # (hf/local/url)
-           location: HuggingFaceCode/stack-v3-train,
-           split: train,
-           text_field: text, 
-           weight: 1.0
+          kind: hf, # (hf/local/url)
+          location: HuggingFaceCode/stack-v3-train,
+          split: train,
+          text_field: text, 
+          revision: cebfda2,
+          license: odc-by,
+          weight: 1.0
         }

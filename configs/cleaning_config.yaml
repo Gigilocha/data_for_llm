@@ -1,18 +1,31 @@
-# Данный конфиг содержит основные настройки очистки данных.
-# ---------------------------------------------------------------------------------------------------------------
-
-# Флаги очистки данных
-use_cleaning: true # использовать очистку данных
-use_deduplication: true # использовать дедупликацию данных
-use_language_filter: true # использовать фильтрацию по языкам
-use_semantic_filter: true # использовать семантическую фильтрацию
-use_length_filter: true # использовать фильтрацию по длине документа
-
-# Плавующие перменные для фильтрации данных
-max_length: 2048 # максимальная длина документа в токенах
-
-# ---------------------------------------------------------------------------------------------------------------
-
 # Настройка очистки данных для pre-training датасетов
-pre-training:
+pretrain_cleaning:
+  # Параметры нарезки (не правила, а шаг пайплайна)
+  min_length: 256 # минимальная длина документа в символах
+  max_length: 8192 # максимальная длина документа в символах
+  on_too_long: split # что делать с слишком длинными документами (split/drop)
+
+  # Правила очистки для естественного языка
+  prose_rules:
+    normalize_newlines: {enabled: true}
+    fix_encoding: {enabled: true}
+    unicode_nfc: {enabled: true}
+    strip_control: {enabled: true}
+    strip_html: {enabled: true}
+    spacelike: {enabled: true}
+    spaces: {enabled: true}
+    space_nl: {enabled: true}
+    newlines: {enabled: true}
+    drop_empty_brackets: {enabled: true}
+    drop_empty_quotes: {enabled: true}
+    collapse_repeats: {enabled: true, max_run: 3}
+    language_id: {enabled: true, min_confidence: 0.8, sample_chars: 2000}
+    quality: {enabled: true, min_alpha_ratio: 0.6}
+
+  # Правила очистки для языка программирования
+  # никаких language_id, quality, скобок — для кода это мусор
+  code_rules:
+    normalize_newlines: {enabled: true}
+    unicode_nfc: {enabled: true}
+    strip_control: {enabled: true}
   

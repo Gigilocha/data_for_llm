@@ -1,17 +1,8 @@
-'''
-Заметка:
-    
-Данный файл нужен для обработки датасетов, из которых мы хотим получить данные.
-    
-'''
-
 from pathlib import Path
 from typing import Callable, Iterable, Iterator
 
 from datasets import load_dataset
 from datasets import interleave_datasets, IterableDataset
-
-# ============================================================================
 
 # Безопасное имя для использования в путях.
 def _safe_name(name: str) -> str:
@@ -44,6 +35,9 @@ class DataProcessor:
     def __init__(self, data_dir: str, datasets_name: list[str]):
         self.data_dir = data_dir
         self.datasets_name = datasets_name
+
+    # Создание имени датасета
+    def safe_name()
 
     # Запуск одного потока данных из сети
     def load_data(self, path: str) -> list[dict] | None:

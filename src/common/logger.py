@@ -2,7 +2,7 @@ from pathlib import Path
 import re
 import logging
 from logging.handlers import RotatingFileHandler
-from src.common.config import get_config, PROJECT_ROOT  # ← меняем импорт
+from src.common.config import get_config, PROJECT_ROOT  
 
 
 """
