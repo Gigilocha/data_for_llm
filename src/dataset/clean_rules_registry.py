@@ -1,7 +1,7 @@
 from functools import partial
 from typing import Callable
 
-from dataset.rules import (
+from dataset.clean_rules import (
     normalize_newlines, fix_encoding, unicode_nfc,
     strip_control, strip_html,
     spacelike, spaces, space_nl, newlines,
@@ -11,19 +11,22 @@ from dataset.rules import (
 
 
 '''
-Реестр правил очистки.
+Заметка:
+    Файл registry.py содержит реестр правил очистки. 
+    Собирает правила очистки под профиль языка и сохраняет статистику по каждому правилу
+    (сколько раз вызвано, сколько раз изменило текст, сколько раз дропнуло None, первые 20 сэмплов).
 
-REGISTRY: имя из YAML → фабрика правила.
-    Фабрика принимает параметры из YAML (**params) и возвращает
-    готовое правило Callable[[str], str | None].
+    REGISTRY: имя из YAML → фабрика правила.
+        Фабрика принимает параметры из YAML (**params) и возвращает готовое правило Callable[[str], str | None].
 
-REGISTRY_ORDER: единственный источник правды для порядка вызова.
-    YAML задаёт только enabled и параметры, но НЕ порядок.
+    REGISTRY_ORDER: единственный источник правды для порядка вызова.
+        YAML задаёт только enabled и параметры, но НЕ порядок.
 '''
 
 
 #
 Rule = Callable[[str], str | None]
+
 # Без параметров — фабрика просто возвращает функцию
 REGISTRY: dict[str, Callable[..., Rule]] = {
     "normalize_newlines":  lambda: normalize_newlines,

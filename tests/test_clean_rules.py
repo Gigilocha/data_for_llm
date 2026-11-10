@@ -1,10 +1,10 @@
 import pytest
-from dataset.rules import (
+from dataset.clean_rules import (
     RE_CONTROL, RE_SPACELIKE, 
     RE_SPACES, RE_SPACE_NL, RE_NEWLINES, 
     RE_EMPTY_BRACKETS, RE_EMPTY_QUOTES, 
     RE_HTML_BLOCKS, RE_HTML_COMMENT, RE_HTML_TAG)
-from dataset.rules import (
+from dataset.clean_rules import (
     unicode_nfc, strip_control, 
     fix_encoding, strip_html, 
     spacelike, spaces, space_nl, normalize_newlines,

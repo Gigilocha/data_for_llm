@@ -1,46 +1,69 @@
-from pathlib import Path
-from typing import Callable, Iterable, Iterator
-
+from typing import Iterator
+import hashlib
 from datasets import load_dataset
-from datasets import interleave_datasets, IterableDataset
-
-# Безопасное имя для использования в путях.
-def _safe_name(name: str) -> str:
-    return name.replace("/", "_")
-
-# Имя папки кеша под конкретный источник.
-def _dir_name(source, extra: str | None = None) -> str:
-    cache_name = getattr(source, "cache_name", None)
-    if cache_name:
-        return _safe_name(cache_name)
-
-    name = _safe_name(source.dataset_name)
-    subset = getattr(source, "subset", None)
-    if subset:
-        name = f"{name}__{_safe_name(subset)}"
-    if extra:
-        name = f"{name}__{_safe_name(extra)}"
-    return name
-
-# Путь на диске под конкретный (stage, split, [language], источник)
-def _local_dir(data_dir: Path, stage: str, split: str, dirname: str, language: str | None = None) -> Path:
-    if language is not None:
-        return data_dir / stage / split / language / dirname
-    return data_dir / stage / split / dirname
-
-# ============================================================================
-
-# Класс обработки данных
-class DataProcessor:
-    def __init__(self, data_dir: str, datasets_name: list[str]):
-        self.data_dir = data_dir
-        self.datasets_name = datasets_name
-
-    # Создание имени датасета
-    def safe_name()
-
-    # Запуск одного потока данных из сети
-    def load_data(self, path: str) -> list[dict] | None:
-        try:
+from .document import Document
 
 
+"""
+Стабильный ID, чтобы при перезапусках корзины не разъезжались.
+"""
+def _make_id(source_name: str, key: str) -> str:
+    raw = f"{source_name}_{key}"
+    return hashlib.md5(raw.encode("utf-8")).hexdigest()
+
+
+"""
+Читает один источник (например, ru_web) и отдает поток Document.
+
+Если у источника поле "text" на верхнем уровне (prose) — оборачивает строку.
+Если верхний уровень — репозиторий с files[] (code) — разворачивает в файлы.
+"""
+def load_documents(lang_name: str, lang_cfg: dict, source_cfg: dict) -> Iterator[Document]:
+    profile = lang_cfg["profile"]
+    source_name = source_cfg["name"]
+
+    kwargs = {
+        "path": source_cfg["location"],
+        "split": source_cfg["split"],
+        "revision": source_cfg["revision"],
+        "streaming": True,
+    }
+    if source_cfg.get("subset"):
+        kwargs["name"] = source_cfg["subset"]
+
+    ds = load_dataset(**kwargs)
+
+    # Для кода (stack-v3-train) — разворачиваем репозитории в файлы
+    if profile == "code":
+        lang_filter = source_cfg.get("language_filter", "python")
+        for repo_idx, repo in enumerate(ds):
+            for file_idx, f in enumerate(repo.get("files", [])):
+                if f.get("language") != lang_filter:
+                    continue
+                content = f.get("content") or ""
+                if not content or not isinstance(content, str):
+                    continue
+                yield Document(
+                    id=_make_id(source_name, f"{repo_idx}_{file_idx}"),
+                    text=content,
+                    source=source_name,
+                    language=lang_name,
+                    profile=profile,
+                    parent_id=None,
+                )
+        return
+
+    # Для прозы — одна строка = один документ
+    text_field = source_cfg["text_field"]
+    for idx, row in enumerate(ds):
+        text = row.get(text_field)
+        if not text or not isinstance(text, str):
+            continue
+        yield Document(
+            id=_make_id(source_name, str(idx)),
+            text=text,
+            source=source_name,
+            language=lang_name,
+            profile=profile,
+            parent_id=None,
+        )

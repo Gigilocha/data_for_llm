@@ -2,7 +2,14 @@ from typing import Iterable, Iterator
 from dataclasses import replace
 from .document import Document
 from .cleaner import Cleaner
-from .rules import split_long
+from .clean_rules import split_long
+
+
+'''
+Заметка:
+    Файл cleaner_pipeline.py содержит функции для построения пайплайна очистки текста, включая сборку Cleaner'ов и обработку потока документов.
+    Функция build_cleaners создает словарь Cleaner'ов на основе конфигурации
+'''
 
 
 """
