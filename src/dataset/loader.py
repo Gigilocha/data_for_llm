@@ -1,4 +1,5 @@
 from typing import Iterator
+import os
 import hashlib
 from datasets import load_dataset
 from .document import Document
@@ -27,6 +28,7 @@ def load_documents(lang_name: str, lang_cfg: dict, source_cfg: dict) -> Iterator
         "split": source_cfg["split"],
         "revision": source_cfg["revision"],
         "streaming": True,
+        "token": os.environ.get("HF_TOKEN"),
     }
     if source_cfg.get("subset"):
         kwargs["name"] = source_cfg["subset"]
@@ -38,7 +40,7 @@ def load_documents(lang_name: str, lang_cfg: dict, source_cfg: dict) -> Iterator
         lang_filter = source_cfg.get("language_filter", "python")
         for repo_idx, repo in enumerate(ds):
             for file_idx, f in enumerate(repo.get("files", [])):
-                if f.get("language") != lang_filter:
+                if (f.get("language") or "").lower() != lang_filter.lower():
                     continue
                 content = f.get("content") or ""
                 if not content or not isinstance(content, str):

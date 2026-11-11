@@ -134,3 +134,10 @@ def dataset_manifest_path(base: Path) -> Path:
 # Путь к файлу манифеста запусков
 def run_manifest_path(base: Path, run_id: str) -> Path:
     return base / RUNS_DIR / run_id / MANIFEST_NAME
+
+def dropped_samples_dir(base: Path, lang: str) -> Path:
+    return base / CLEANED_DIR / "dropped_samples" / lang
+
+
+def cleaned_split_dir(base: Path, split: str) -> Path:
+    return base / CLEANED_DIR / split

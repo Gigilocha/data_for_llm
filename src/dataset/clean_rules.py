@@ -4,6 +4,8 @@ import unicodedata
 import fasttext
 import os
 from functools import lru_cache
+from pathlib import Path
+from common.config import get_env_settings
 
 
 '''
@@ -182,10 +184,13 @@ def collapse_repeats(text: str, max_run: int = 3) -> str | None:
 '''
 @lru_cache(maxsize=1)
 def _load_model() -> fasttext.FastText._FastText:
-    path = os.environ.get("FASTTEXT_LANG_MODEL")
+    env = get_env_settings()
+    path = env.fasttext_lang_model
     if not path:
-        raise RuntimeError("FASTTEXT_LANG_MODEL is not set")
-    return fasttext.load_model(path)
+        raise RuntimeError("FASTTEXT_LANG_MODEL is not set in .env")
+    if not path.exists():
+        raise RuntimeError(f"FASTTEXT model not found: {path}")
+    return fasttext.load_model(str(path))
 
 '''
 detect(text) -> (lang, conf):

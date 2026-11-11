@@ -24,8 +24,9 @@ class Settings(BaseSettings):
 
     # Директории
     configs_dir :Path
-    data_dir: Path
     output_dir: Path
+    hf_token: str | None = None
+    fasttext_lang_model: Path | None = None
 
 # ---------------------------------------------------------------------------------------------------
 
@@ -52,7 +53,7 @@ class Language(BaseModel):
 class AllLanguages(BaseModel):
     ru: Language
     en: Language
-    python: Language
+    py: Language 
 
 # Весь конфиг Pre-training данных
 class Pretrain(BaseModel):
