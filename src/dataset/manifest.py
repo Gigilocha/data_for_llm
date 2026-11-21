@@ -11,7 +11,6 @@ from common.utils import SamplingBudget, cleaned_manifest_path, dropped_samples_
 '''
 
 
-# Построение манифеста после скачки+очистки
 def build_cleaned_manifest(
     *,
     run_id: str,
@@ -43,29 +42,18 @@ def build_cleaned_manifest(
         "cleaning_rules": cleaning_rules,
         "cleaning_params": cleaning_params,
         "written": written_by_lang,
-        "written_totals": {
-            "train": {
-                "docs": writers["train"].total_written,
-                "shards": writers["train"].shard_id,
-                "bytes": writers["train"].total_bytes,
-            },
-            "val": {
-                "docs": writers["val"].total_written,
-                "shards": writers["val"].shard_id,
-                "bytes": writers["val"].total_bytes,
-            },
-        },
+        "written_totals": writers,  # ← уже готовый dict
         "cleaning_stats": cleaning_stats,
         "shortfalls": shortfalls,
     }
 
-# Запись манифеста после скачки+очистке
+
 def write_cleaned_manifest(base: Path, manifest: dict) -> None:
     path = cleaned_manifest_path(base)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
 
-# Пишет cleaned/dropped_samples/{lang}/{rule}.jsonl из Cleaner.stats[rule].samples.
+
 def write_dropped_samples(base: Path, cleaners: dict) -> None:
     for lang, cleaner in cleaners.items():
         for rule, stats in cleaner.stats.items():

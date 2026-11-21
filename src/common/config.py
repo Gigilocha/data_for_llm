@@ -3,7 +3,7 @@ from typing import Literal
 from functools import lru_cache
 
 import yaml
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -48,13 +48,7 @@ class Language(BaseModel):
     profile: str
     chars_per_token: float
     sources: list[Sources]
-
-# Все языки
-class AllLanguages(BaseModel):
-    ru: Language
-    en: Language
-    py: Language 
-
+    
 # Весь конфиг Pre-training данных
 class Pretrain(BaseModel):
     seed: int
@@ -63,7 +57,7 @@ class Pretrain(BaseModel):
     val_split_ratio: float
     split_salt: str
     overshoot: float
-    languages: AllLanguages
+    languages: dict[str, Language] = Field(default_factory=dict)
 
 # ---------------------------------------------------------------------------------------------------
 

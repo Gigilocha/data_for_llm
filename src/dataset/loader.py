@@ -19,7 +19,12 @@ def _make_id(source_name: str, key: str) -> str:
 Если у источника поле "text" на верхнем уровне (prose) — оборачивает строку.
 Если верхний уровень — репозиторий с files[] (code) — разворачивает в файлы.
 """
-def load_documents(lang_name: str, lang_cfg: dict, source_cfg: dict) -> Iterator[Document]:
+def load_documents(
+    lang_name: str, 
+    lang_cfg: dict, 
+    source_cfg: dict,
+    token: str | None = None,   
+) -> Iterator[Document]:
     profile = lang_cfg["profile"]
     source_name = source_cfg["name"]
 
@@ -28,8 +33,9 @@ def load_documents(lang_name: str, lang_cfg: dict, source_cfg: dict) -> Iterator
         "split": source_cfg["split"],
         "revision": source_cfg["revision"],
         "streaming": True,
-        "token": os.environ.get("HF_TOKEN"),
     }
+    if token:
+        kwargs["token"] = token
     if source_cfg.get("subset"):
         kwargs["name"] = source_cfg["subset"]
 
