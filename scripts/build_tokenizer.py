@@ -51,12 +51,19 @@ def main():
     logger.info("4. Сохранение токенизатора в %s...", out_dir)
     save_tokenizer(tokenizer, out_dir)
 
-    logger.info("5. Запись манифеста...")
+    logger.info("5. Оценка качества токенизатора...")
+    from tokenizer.evaluate import evaluate_tokenizer
+    eval_metrics = evaluate_tokenizer(tokenizer, texts)
+    logger.info("Compression Ratio: %s, Tokens per Word: %s", 
+                eval_metrics["compression_ratio"], eval_metrics["tokens_per_word"])
+
+    logger.info("6. Запись манифеста...")
     manifest = build_tokenizer_manifest(
         config=config,
         sample_path=sample_path,
         actual_sample_chars=total_chars,
         output_vocab_size=actual_vocab_size,
+        evaluation_metrics=eval_metrics,  # <-- передаем сюда
     )
     write_tokenizer_manifest(out_dir, manifest)
     

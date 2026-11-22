@@ -9,8 +9,10 @@ def build_tokenizer_manifest(
     sample_path: Path,
     actual_sample_chars: int,
     output_vocab_size: int,
+    evaluation_metrics: dict | None = None,  # <-- новый аргумент
 ) -> dict:
     """Собирает манифест токенизатора, наследуя данные из конфигов."""
+    
     languages = list(config.data.languages.keys())
     
     # Считаем хэш файла среза, чтобы зафиксировать его состояние
@@ -20,10 +22,10 @@ def build_tokenizer_manifest(
             hasher.update(chunk)
     sample_sha256 = hasher.hexdigest()
 
-    return {
+    manifest = {
         "created_at": datetime.now(timezone.utc).isoformat(),
-        "algorithm": "bpe",          # Захардкожено под текущую логику
-        "library": "tokenizers",     # Захардкожено
+        "algorithm": "bpe",
+        "library": "tokenizers",
         "type": "multilingual" if len(languages) > 1 else "monolingual",
         "languages": languages,
         "language_prop": {lang: cfg.share for lang, cfg in config.data.languages.items()},
@@ -34,6 +36,12 @@ def build_tokenizer_manifest(
         "sample_sha256": sample_sha256,
         "special_tokens": config.tokenizer.special_tokens,
     }
+
+    # Добавляем метрики, если они есть
+    if evaluation_metrics:
+        manifest["evaluation"] = evaluation_metrics
+        
+    return manifest
 
 def write_tokenizer_manifest(save_dir: Path, manifest: dict) -> None:
     path = save_dir / "manifest.json"
