@@ -1,7 +1,7 @@
 from pathlib import Path
 import pyarrow as pa
 import pyarrow.parquet as pq
-from .document import Document
+from dataset.document import Document
 from dataclasses import asdict
 
 

@@ -1,6 +1,6 @@
 import pytest
-from dataset.cleaner_pipeline import build_cleaners, clean_stream
-from dataset.cleaner import Cleaner
+from dataset.cleaning.pipeline import build_cleaners, clean_stream
+from dataset.cleaning.cleaner import Cleaner
 from dataset.document import Document
 
 @pytest.fixture

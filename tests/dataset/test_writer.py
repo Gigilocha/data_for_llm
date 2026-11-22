@@ -2,7 +2,7 @@
 import pyarrow.parquet as pq
 from pathlib import Path
 
-from dataset.writer import Writer
+from dataset.io.writer import Writer
 from dataset.document import Document
 
 

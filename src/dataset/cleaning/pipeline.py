@@ -1,8 +1,8 @@
 from typing import Iterable, Iterator
 from dataclasses import replace
-from .document import Document
-from .cleaner import Cleaner
-from .clean_rules import split_long
+from dataset.document import Document
+from dataset.cleaning.cleaner import Cleaner
+from dataset.cleaning.rules import split_long
 
 
 '''

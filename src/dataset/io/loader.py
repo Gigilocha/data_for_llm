@@ -2,7 +2,7 @@ from typing import Iterator
 import os
 import hashlib
 from datasets import load_dataset
-from .document import Document
+from dataset.document import Document
 
 
 """

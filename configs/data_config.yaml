@@ -1,15 +1,23 @@
 pretrain:
   seed: 42
   shard_size_mb: 64
-  target_tokens: 10000
-  val_split_ratio: 0.1
+  target_tokens: 30000      # Маленький бюджет (15к символов)
+  val_split_ratio: 0.2     # 20% в val (чтобы 100% появилась папка val)
   split_salt: v1
   overshoot: 1.0
 
   languages:
     ru:
-      share: 1.0
+      share: 0.6
       profile: prose
       chars_per_token: 3.0
       sources:
-        - {name: ru_web, kind: hf, location: "wikimedia/wikipedia", subset: "20231101.ru", split: "train", text_field: "text", revision: "b04c8d1ceb2f5cd4588862100d08de323dccfbaa", license: cc-by-sa-3.0, weight: 1.0}
+        # Берем Википедию (она скачивается быстрее и стабильнее, чем web)
+        - {name: ru_wikipedia, kind: hf, location: wikimedia/wikipedia, subset: 20231101.ru, split: train, text_field: text, revision: b04c8d1ceb2f5cd4588862100d08de323dccfbaa, license: cc-by-sa-3.0, weight: 1.0}
+
+    en:
+      share: 0.4
+      profile: prose
+      chars_per_token: 3.0
+      sources:
+        - {name: en_web, kind: hf, location: HuggingFaceFW/fineweb, split: train, text_field: text, revision: 9bb295ddab0e05d785b879661af7260fed5140fc, license: odc-by, weight: 1.0}

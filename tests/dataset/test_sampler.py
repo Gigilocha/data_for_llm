@@ -3,10 +3,10 @@ import pytest
 from pathlib import Path
 from dataclasses import replace
 
-from dataset.sampler import sample_source, sample_group
+from dataset.sampling.sampler import sample_source
 from dataset.document import Document
-from dataset.writer import Writer
-from dataset.cleaner import Cleaner
+from dataset.io.writer import Writer
+from dataset.cleaning.cleaner import Cleaner
 
 
 # ---------------------------------------------------------------------------
@@ -182,125 +182,3 @@ def test_sample_source_val_bucket(monkeypatch, tmp_path, noop_cleaner):
     assert val_writer.total_written == 1
     assert train_writer.total_written == 0
 
-
-# ---------------------------------------------------------------------------
-# sample_group
-# ---------------------------------------------------------------------------
-
-def test_sample_group_splits_budget(monkeypatch):
-    calls = []
-
-    def fake_sample_source(source_cfg, budget_chars, **kw):
-        calls.append((source_cfg["name"], budget_chars))
-        return {
-            "train": {"chars": budget_chars, "docs": 1},
-            "val":   {"chars": 0, "docs": 0},
-        }
-
-    monkeypatch.setattr("dataset.sampler.sample_source", fake_sample_source)
-
-    written, shortfalls, planned = sample_group(
-        group_name="ru",
-        budget_chars=1000,
-        items=[
-            {"name": "web", "location": "x", "weight": 0.7},
-            {"name": "wiki", "location": "y", "weight": 0.3},
-        ],
-        cleaner=None,
-        lang_name="ru",
-        lang_cfg={"profile": "prose", "sources": []},
-        train_writer=None,
-        val_writer=None,
-        min_length=1,
-        max_length=8192,
-        on_too_long="split",
-        val_split_ratio=0.01,
-        split_salt="v1",
-    )
-
-    assert shortfalls == []
-    assert planned == {"web": 700, "wiki": 300}
-    assert written == {
-        "web":  {"train": {"chars": 700, "docs": 1}, "val": {"chars": 0, "docs": 0}},
-        "wiki": {"train": {"chars": 300, "docs": 1}, "val": {"chars": 0, "docs": 0}},
-    }
-    assert calls == [("web", 700), ("wiki", 300)]
-
-
-def test_sample_group_shortfall(monkeypatch):
-    def fake_sample_source(source_cfg, budget_chars, **kw):
-        return {
-            "train": {"chars": budget_chars // 2, "docs": 1},
-            "val":   {"chars": 0, "docs": 0},
-        }
-
-    monkeypatch.setattr("dataset.sampler.sample_source", fake_sample_source)
-
-    written, shortfalls, planned = sample_group(
-        group_name="ru",
-        budget_chars=1000,
-        items=[{"name": "web", "location": "x", "weight": 1.0}],
-        cleaner=None,
-        lang_name="ru",
-        lang_cfg={"profile": "prose", "sources": []},
-        train_writer=None,
-        val_writer=None,
-        min_length=1,
-        max_length=8192,
-        on_too_long="split",
-        val_split_ratio=0.01,
-        split_salt="v1",
-    )
-
-    assert planned == {"web": 1000}
-    assert shortfalls == [{
-        "group": "ru",
-        "source": "web",
-        "written": 500,
-        "budget": 1000,
-    }]
-
-
-def test_sample_group_recurses(monkeypatch):
-    calls = []
-
-    def fake_sample_source(source_cfg, budget_chars, **kw):
-        calls.append((source_cfg["name"], budget_chars))
-        return {
-            "train": {"chars": budget_chars, "docs": 1},
-            "val":   {"chars": 0, "docs": 0},
-        }
-
-    monkeypatch.setattr("dataset.sampler.sample_source", fake_sample_source)
-
-    written, shortfalls, planned = sample_group(
-        group_name="ru",
-        budget_chars=1000,
-        items=[{
-            "name": "web_group",
-            "weight": 1.0,
-            "sources": [
-                {"name": "web1", "location": "x", "weight": 0.5},
-                {"name": "web2", "location": "y", "weight": 0.5},
-            ],
-        }],
-        cleaner=None,
-        lang_name="ru",
-        lang_cfg={"profile": "prose", "sources": []},
-        train_writer=None,
-        val_writer=None,
-        min_length=1,
-        max_length=8192,
-        on_too_long="split",
-        val_split_ratio=0.01,
-        split_salt="v1",
-    )
-
-    assert shortfalls == []
-    # flatten с префиксом
-    assert planned == {"web_group/web1": 500, "web_group/web2": 500}
-    assert written == {
-        "web_group/web1": {"train": {"chars": 500, "docs": 1}, "val": {"chars": 0, "docs": 0}},
-        "web_group/web2": {"train": {"chars": 500, "docs": 1}, "val": {"chars": 0, "docs": 0}},
-    }
-    assert calls == [("web1", 500), ("web2", 500)]

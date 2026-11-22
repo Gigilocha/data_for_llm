@@ -1,7 +1,7 @@
 from functools import partial
 from typing import Callable
 
-from dataset.clean_rules import (
+from dataset.cleaning.rules import (
     normalize_newlines, fix_encoding, unicode_nfc,
     strip_control, strip_html,
     spacelike, spaces, space_nl, newlines,

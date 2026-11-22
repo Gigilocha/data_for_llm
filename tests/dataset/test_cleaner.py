@@ -1,5 +1,5 @@
 import pytest
-from dataset.cleaner import Cleaner
+from dataset.cleaning.cleaner import Cleaner
 
 @pytest.fixture
 def prose_cfg():

@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Callable
-from .clean_rules_registry import REGISTRY, REGISTRY_ORDER
+from dataset.cleaning.registry import REGISTRY, REGISTRY_ORDER
 
 
 '''

@@ -1,6 +1,6 @@
 from tokenizers import Tokenizer, Regex, models, pre_tokenizers, decoders, processors, trainers
 from transformers import PreTrainedTokenizerFast
-from src.common.config import TokenizerConfig
+from common.config import TokenizerConfig
 from typing import Iterator
 from pathlib import Path
 
@@ -47,7 +47,6 @@ def save_tokenizer(tokenizer: PreTrainedTokenizerFast, save_dir: Path) -> None:
     tokenizer.save_pretrained(save_dir)
 
 
-# Функции для Pre-training
 # Кодирование текста 
 def encode(tokenizer: PreTrainedTokenizerFast, text: str, add_special_tokens: bool = True) -> list[int]:
     ids = tokenizer.encode(text, add_special_tokens=False)
@@ -62,16 +61,4 @@ def encode(tokenizer: PreTrainedTokenizerFast, text: str, add_special_tokens: bo
 def decode(tokenizer: PreTrainedTokenizerFast, ids: list[int], skip_special_tokens: bool = True) -> str:
     return tokenizer.decode(ids, skip_special_tokens=skip_special_tokens)
 
-
-# Функции для Fine-tuning
-# Кодирование сообщения
-# def encode_messege(message):
-
-
-# Форматирвоание диалогов в плоскую последовательность
-# def render_conversation
-
-
-# Возвращение маски для спец токенов, дабы модель не генерила не нужное
-# def build_loss_mask
 

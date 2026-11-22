@@ -2,7 +2,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 import json
 
-from common.utils import SamplingBudget, cleaned_manifest_path, dropped_samples_dir
+from common.paths import cleaned_manifest_path, dropped_samples_dir
+from dataset.sampling.budget import SamplingBudget
 
 
 '''

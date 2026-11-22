@@ -1,5 +1,5 @@
 import pytest
-from dataset.loader import _make_id, load_documents
+from dataset.io.loader import _make_id, load_documents
 
 
 # Тест для функции _make_id

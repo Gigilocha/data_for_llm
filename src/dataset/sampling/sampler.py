@@ -1,10 +1,10 @@
 from dataclasses import replace
 import zlib
 
-from .cleaner import Cleaner
-from .writer import Writer
-from .loader import load_documents
-from .clean_rules import split_long
+from ..cleaning.cleaner import Cleaner
+from ..io.writer import Writer
+from dataset.io.loader import load_documents
+from dataset.cleaning.rules import split_long
 
 
 def sample_source(

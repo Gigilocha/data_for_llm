@@ -6,7 +6,7 @@ from dataset.manifest import (
     write_cleaned_manifest,
     write_dropped_samples,
 )
-from common.utils import SamplingBudget
+from dataset.sampling.budget import SamplingBudget
 
 
 def test_build_cleaned_manifest_basic():

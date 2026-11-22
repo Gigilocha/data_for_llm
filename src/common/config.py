@@ -6,11 +6,7 @@ import yaml
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
-# ---------------------------------------------------------------------------------------------------
-
-# Определение корня проекта
-PROJECT_ROOT = Path(__file__).parents[2].resolve()
+from .paths import PROJECT_ROOT
 
 # ---------------------------------------------------------------------------------------------------
 
@@ -31,7 +27,7 @@ class Settings(BaseSettings):
 # ---------------------------------------------------------------------------------------------------
 
 # Один ресурс
-class Sources(BaseModel):
+class SourceConfig(BaseModel):
     name: str
     kind: str
     location: str
@@ -43,21 +39,21 @@ class Sources(BaseModel):
     weight: float
 
 # Один язык
-class Language(BaseModel):
+class LanguageConfig(BaseModel):
     share: float
     profile: str
     chars_per_token: float
-    sources: list[Sources]
+    sources: list[SourceConfig]
     
 # Весь конфиг Pre-training данных
-class Pretrain(BaseModel):
+class DataConfig(BaseModel):
     seed: int
     shard_size_mb: int
     target_tokens: int
     val_split_ratio: float
     split_salt: str
     overshoot: float
-    languages: dict[str, Language] = Field(default_factory=dict)
+    languages: dict[str, LanguageConfig] = Field(default_factory=dict)
 
 # ---------------------------------------------------------------------------------------------------
 
@@ -96,11 +92,9 @@ class Cleaning(BaseModel):
 # ---------------------------------------------------------------------------------------------------
 
 # Токенизизатор
-class Tokenizer(BaseModel):
-    algorithm: str
-    library: str
+class TokenizerConfig(BaseModel):
     vocab_size: int
-    train_sample_size: int | None = None
+    sample_chars: int
     special_tokens: dict
     split_pattern: str
 
@@ -109,9 +103,9 @@ class Tokenizer(BaseModel):
 # Общий конфиг
 class Config(BaseModel):
     env: Settings
-    data: Pretrain
+    data: DataConfig
     cleaning: Cleaning
-    tokenizer: Tokenizer
+    tokenizer: TokenizerConfig
 
 # ---------------------------------------------------------------------------------------------------
 
@@ -136,7 +130,7 @@ def get_config() -> Config:
     env = get_env_settings()
     return Config(
         env=env,
-        data=Pretrain(**_load_yaml(env, "data_config.yaml")["pretrain"]),
+        data=DataConfig(**_load_yaml(env, "data_config.yaml")["pretrain"]),
         cleaning=Cleaning(**_load_yaml(env, "cleaning_config.yaml")["pretrain_cleaning"]),
-        tokenizer=Tokenizer(**_load_yaml(env, "tokenizer_config.yaml")),
+        tokenizer=TokenizerConfig(**_load_yaml(env, "tokenizer_config.yaml")),
     )
