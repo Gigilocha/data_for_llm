@@ -235,30 +235,3 @@ def quality(text: str, min_alpha_ratio: float = 0.6) -> str | None:
     letters = sum(c.isalpha() for c in text)
     visible = sum(not c.isspace() for c in text) or 1
     return text if letters / visible >= min_alpha_ratio else None
-
-
-# Проверка длинны текста
-'''
-Смысл: отсечь слишком короткие документы — обрывки, заголовки, мусор,
-    которые не несут полезного сигнала для pre-training.
-Длина считается в символах (не байтах, не токенах). Пробелы и переводы
-    строк входят в len() — правило не нормализует текст, только отбирает.
-'''
-def length_gate(text: str, min_length: int = 256) -> str | None:
-    return text if len(text) >= min_length else None
-
-'''
-Разбиение длинного документа на чанки.
-Длина в символах, не токенах. Режется «как есть» — без учёта границ
-    слов/предложений. Если нужен умный сплит по абзацам/предложениям —
-    это отдельная функция, не эта.
-Возвращает list[str], а не str | None — поэтому не Rule, а отдельный
-    шаг пайплайна после apply_rules и length_gate. Итератор разворачивает
-    список через yield from.
-'''
-def split_long(text: str, max_length: int = 8192, on_too_long: str = "split") -> list[str]:
-    if len(text) <= max_length:
-        return [text]
-    if on_too_long == "drop":
-        return []
-    return [text[i:i + max_length] for i in range(0, len(text), max_length)]

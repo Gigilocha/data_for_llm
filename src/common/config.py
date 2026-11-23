@@ -8,7 +8,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from .paths import PROJECT_ROOT
 
-# ---------------------------------------------------------------------------------------------------
 
 # Настройки из .env 
 class Settings(BaseSettings):
@@ -24,7 +23,6 @@ class Settings(BaseSettings):
     hf_token: str | None = None
     fasttext_lang_model: Path | None = None
 
-# ---------------------------------------------------------------------------------------------------
 
 # Один ресурс
 class SourceConfig(BaseModel):
@@ -53,9 +51,9 @@ class DataConfig(BaseModel):
     val_split_ratio: float
     split_salt: str
     overshoot: float
+    context_length: int 
     languages: dict[str, LanguageConfig] = Field(default_factory=dict)
 
-# ---------------------------------------------------------------------------------------------------
 
 class RuleConfig(BaseModel):
     enabled: bool = True
@@ -83,13 +81,9 @@ class CodeRules(BaseModel):
     strip_control: RuleConfig | None = None
 
 class Cleaning(BaseModel):
-    max_length: int
-    min_length: int
-    on_too_long: Literal["split", "drop"]
     prose_rules: ProseRules
     code_rules: CodeRules
 
-# ---------------------------------------------------------------------------------------------------
 
 # Токенизизатор
 class TokenizerConfig(BaseModel):
@@ -98,7 +92,6 @@ class TokenizerConfig(BaseModel):
     special_tokens: dict
     split_pattern: str
 
-# ---------------------------------------------------------------------------------------------------
 
 # Общий конфиг
 class Config(BaseModel):
@@ -107,7 +100,6 @@ class Config(BaseModel):
     cleaning: Cleaning
     tokenizer: TokenizerConfig
 
-# ---------------------------------------------------------------------------------------------------
 
 # Загрузка .yaml по названию
 def _load_yaml(env: Settings, filename: str) -> dict:
@@ -115,14 +107,12 @@ def _load_yaml(env: Settings, filename: str) -> dict:
     with open(path, encoding="utf-8") as f:
         return yaml.safe_load(f) or {}
 
-# ---------------------------------------------------------------------------------------------------
 
 # Получение настроек
 @lru_cache
 def get_env_settings() -> Settings:
     return Settings()
 
-# ---------------------------------------------------------------------------------------------------
 
 # Получение единого конфига
 @lru_cache

@@ -10,7 +10,7 @@ from common.paths import (
 from dataset.cleaning.pipeline import build_cleaners
 from dataset.io.writer import Writer
 from dataset.sampling.sampler import sample_source
-from dataset.manifest import (
+from dataset.cleaning.manifest import (
     build_cleaned_manifest,
     write_cleaned_manifest,
     write_dropped_samples,
@@ -18,15 +18,17 @@ from dataset.manifest import (
 from dataset.sampling.budget import compute_budget
 
 
+# Создание логера
 logger = get_logger(__name__)
 
 
+# Опеределение ID запуска
 def make_run_id() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%d_%H%M%S")
 
 
+# Сбор источников данных
 def collect_sources(languages_cfg: dict) -> list[dict]:
-    """Прозрачно: копируем все поля source_cfg + lang."""
     result = []
     for lang, lang_cfg in languages_cfg.items():
         for src in lang_cfg["sources"]:
@@ -34,6 +36,7 @@ def collect_sources(languages_cfg: dict) -> list[dict]:
     return result
 
 
+# Активные правила очистки
 def active_rules(rules_cfg: dict) -> dict:
     result = {}
     for name, params in rules_cfg.items():
@@ -43,6 +46,7 @@ def active_rules(rules_cfg: dict) -> dict:
     return result
 
 
+# Главная функция
 def main():
     # 1. config + env
     config = get_config()
@@ -99,9 +103,7 @@ def main():
                 budget_chars=src_budget,
                 train_writer=train_writer,
                 val_writer=val_writer,
-                min_length=config.cleaning.min_length,
-                max_length=config.cleaning.max_length,
-                on_too_long=config.cleaning.on_too_long,
+                # min_length, max_length, on_too_long УДАЛЕНЫ
                 val_split_ratio=config.data.val_split_ratio,
                 split_salt=config.data.split_salt,
                 token=env.hf_token,
@@ -142,33 +144,18 @@ def main():
     # 6. manifest
     manifest = build_cleaned_manifest(
         run_id=run_id,
-        target_tokens=config.data.target_tokens,
-        overshoot=config.data.overshoot,
-        sources=collect_sources(languages_cfg),
-        budget=budget,
-        chars_per_token={lang: cfg["chars_per_token"] for lang, cfg in languages_cfg.items()},
         cleaning_rules={
             "prose": active_rules(cleaning_cfg["prose_rules"]),
             "code":  active_rules(cleaning_cfg["code_rules"]),
         },
         cleaning_params={
-            "min_length": config.cleaning.min_length,
-            "max_length": config.cleaning.max_length,
-            "on_too_long": config.cleaning.on_too_long,
             "val_split_ratio": config.data.val_split_ratio,
             "split_salt": config.data.split_salt,
         },
         written_by_lang=all_written,
         planned_by_lang=all_planned,
         shortfalls=all_shortfalls,
-        cleaning_stats={
-            lang: {
-                rule: {"calls": s.calls, "changed": s.changed, "dropped": s.dropped}
-                for rule, s in cleaner.stats.items()
-            }
-            for lang, cleaner in cleaners.items()
-        },
-        writers=writers_summary,  # ← теперь это плоский dict (см. ниже)
+        writers=writers_summary,
     )
     write_cleaned_manifest(env.output_dir, manifest)
     write_dropped_samples(env.output_dir, cleaners)

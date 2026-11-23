@@ -9,6 +9,7 @@ class SamplingBudget:
     tokenizer_sample_chars: int
 
 
+# Функция для вычисления бюджета 
 def compute_budget(target_tokens: int, overshoot: float, languages: dict) -> SamplingBudget:
     chars = {}
     for lang, cfg in languages.items():
@@ -23,7 +24,7 @@ def compute_budget(target_tokens: int, overshoot: float, languages: dict) -> Sam
         tokenizer_sample_chars=sample_chars,
     )
 
-
+# 
 def split_budget_by_weights(total: int, weights: list[float]) -> list[int]:
     if not weights:
         return []

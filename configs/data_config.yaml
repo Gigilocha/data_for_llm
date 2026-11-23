@@ -1,23 +1,45 @@
 pretrain:
-  seed: 42
-  shard_size_mb: 64
-  target_tokens: 30000      # Маленький бюджет (15к символов)
-  val_split_ratio: 0.2     # 20% в val (чтобы 100% появилась папка val)
-  split_salt: v1
-  overshoot: 1.0
+  seed: 42 # сид
+  shard_size_mb: 64 # максимальный размер одного шарда в МБ
 
+  target_tokens: 100000 # целевое количество токенов (общий бюджет)
+  context_length: 1024 # длинна контекста модели в токенах (для нарезки текста на правильную длину последовательности подачи)
+
+  val_split_ratio: 0.2 # доля для валидационной выборки
+  split_salt: v1 # 
+
+  overshoot: 1.0 # Запас на очистку
+
+  # Языки
   languages:
-    ru:
-      share: 0.6
-      profile: prose
-      chars_per_token: 3.0
+    # Русские языковые источники
+    ru: 
+      share: 0.6 # Доля языка в общем бюджете
+      profile: prose # Профиль языка для очистки
+      chars_per_token: 3.0 # Запас на сжатие токенизатора (определяется в зависимости от качества сжатия конкретного языка)
       sources:
-        # Берем Википедию (она скачивается быстрее и стабильнее, чем web)
-        - {name: ru_wikipedia, kind: hf, location: wikimedia/wikipedia, subset: 20231101.ru, split: train, text_field: text, revision: b04c8d1ceb2f5cd4588862100d08de323dccfbaa, license: cc-by-sa-3.0, weight: 1.0}
+        # Источники внутри одного языка (для одного языка могут быть сразу несколько источников, это делает внутри языка разделение под задачи: История, Веб, Литература)
+        - {name: ru_web, # имя источника
+           kind: hf, # происхождение источника (hf, локально)
+           location: HuggingFaceFW/fineweb-2, # где лежит
+           subset: rus_Cyrl, # подмножество
+           split: train, # разделение
+           text_field: text, # название поля с текстом
+           revision: af9c13333eb981300149d5ca60a8e9d659b276b9, # хэш коммита репозитория с данными (для воспроизводимости)
+           license: odc-by, # лицензия источника
+           weight: 1.0 # вес внутри языка
+          }
 
+  # Английские языковые источники
     en:
       share: 0.4
       profile: prose
       chars_per_token: 3.0
       sources:
-        - {name: en_web, kind: hf, location: HuggingFaceFW/fineweb, split: train, text_field: text, revision: 9bb295ddab0e05d785b879661af7260fed5140fc, license: odc-by, weight: 1.0}
+        - {name: en_web, 
+           kind: hf, 
+           location: HuggingFaceFW/fineweb, 
+           split: train, text_field: text, 
+           revision: 9bb295ddab0e05d785b879661af7260fed5140fc, 
+           license: odc-by, 
+           weight: 1.0}

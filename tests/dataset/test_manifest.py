@@ -1,7 +1,7 @@
 import json
 from types import SimpleNamespace
 
-from dataset.manifest import (
+from dataset.cleaning.manifest import (
     build_cleaned_manifest,
     write_cleaned_manifest,
     write_dropped_samples,

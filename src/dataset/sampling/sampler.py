@@ -4,7 +4,6 @@ import zlib
 from ..cleaning.cleaner import Cleaner
 from ..io.writer import Writer
 from dataset.io.loader import load_documents
-from dataset.cleaning.rules import split_long
 
 
 def sample_source(
@@ -15,9 +14,6 @@ def sample_source(
     budget_chars: int,
     train_writer: Writer,
     val_writer: Writer,
-    min_length: int,
-    max_length: int,
-    on_too_long: str,
     val_split_ratio: float,
     split_salt: str,
     token: str | None = None,
@@ -28,49 +24,53 @@ def sample_source(
     val_chars = 0
     val_docs = 0
 
+    # Если остаток меньше этого порога — считаем бюджет добитым
+    # Берем 0.1% от бюджета, но не меньше 1000 символов
+    MIN_REMAINING = max(1000, budget_chars // 1000)
+    # Сколько раз подряд мы можем пропустить документ из-за длины
+    MAX_MISSES = 500
+    misses = 0
+
     for doc in load_documents(
         lang_name=lang_name, 
         lang_cfg=lang_cfg, 
         source_cfg=source_cfg,
         token=token,
     ):
+        used = train_chars + val_chars
+        remaining = budget_chars - used
 
-        # Ранний выход, если бюджет уже исчерпан (по документу)
-        if train_chars + val_chars >= budget_chars:
+        # 1. Проверка на "добитость" бюджета
+        if remaining < MIN_REMAINING:
             break
 
+        # 2. Очистка
         text = cleaner.clean(doc.text)
         if text is None:
             continue
 
-        chunks = split_long(text, max_length=max_length, on_too_long=on_too_long)
-
-        for i, chunk in enumerate(chunks):
-            if len(chunk) < min_length:
-                continue
-
-            # ТА САМАЯ СТАРАЯ ПРОВЕРКА (без + len(chunk))
-            if train_chars + val_chars >= budget_chars:
+        # 3. Проверка размера документа
+        if len(text) > remaining:
+            misses += 1
+            if misses >= MAX_MISSES:
                 break
+            continue
 
-            if len(chunks) == 1:
-                final = replace(doc, text=chunk)
-            else:
-                final = replace(doc, text=chunk, id=f"{doc.id}#{i}", parent_id=doc.id)
+        # Документ влез — сбрасываем счетчик промахов
+        misses = 0
 
-            bucket = zlib.crc32(f"{split_salt}{final.parent_id or final.id}".encode("utf-8")) % 100
+        # 4. Распределение в train/val
+        bucket = zlib.crc32(f"{split_salt}{doc.id}".encode("utf-8")) % 100
+        final = replace(doc, text=text)
 
-            if bucket < val_split_ratio * 100:
-                val_writer.add(final)
-                val_chars += len(chunk)
-                val_docs += 1
-            else:
-                train_writer.add(final)
-                train_chars += len(chunk)
-                train_docs += 1
-
-        if train_chars + val_chars >= budget_chars:
-            break
+        if bucket < val_split_ratio * 100:
+            val_writer.add(final)
+            val_chars += len(text)
+            val_docs += 1
+        else:
+            train_writer.add(final)
+            train_chars += len(text)
+            train_docs += 1
 
     return {
         "train": {"chars": train_chars, "docs": train_docs},

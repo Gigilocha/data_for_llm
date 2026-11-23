@@ -21,10 +21,9 @@ logger = get_logger(__name__)
 def main():
     parser = argparse.ArgumentParser(description="LLM Data Pipeline")
     parser.add_argument(
-        "--stage", 
-        choices=["cleaned", "tokenizer", "all"], 
-        default="all",
-        help="Какой этап запускать"
+    "--stage", 
+    choices=["cleaned", "tokenizer", "all"], 
+    default="all",
     )
     args = parser.parse_args()
 

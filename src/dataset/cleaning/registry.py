@@ -24,7 +24,6 @@ from dataset.cleaning.rules import (
 '''
 
 
-#
 Rule = Callable[[str], str | None]
 
 # Без параметров — фабрика просто возвращает функцию

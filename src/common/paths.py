@@ -1,9 +1,10 @@
 from pathlib import Path
 
+
 # Определение корня проекта
 PROJECT_ROOT = Path(__file__).parents[2].resolve()
 
-# Константы
+# Константы по умолчанию
 SHARD_PREFIX = "part_"
 SHARD_SUFFIX = ".parquet"
 
@@ -11,6 +12,7 @@ CLEANED_DIR = "cleaned"
 TOKENIZER_SAMPLE_DIR = "tokenizer_sample"
 TOKENIZER_DIR = "tokenizer"
 DATASET_DIR = "dataset"
+TOKENIZED_DIR = "tokenized"
 RUNS_DIR = "runs"
 MANIFEST_NAME = "manifest.json"
 
@@ -23,19 +25,15 @@ def shard_glob_pattern() -> str:
     return f"{SHARD_PREFIX}*{SHARD_SUFFIX}"
 
 
-# Пути
 def cleaned_dir(base: Path, lang: str, split: str) -> Path:
-    """Старый путь (для обратной совместимости, но в новом скрипте не используется)."""
     return base / CLEANED_DIR / lang / split
 
 
 def cleaned_source_split_dir(base: Path, lang: str, source: str, split: str) -> Path:
-    """Новый путь: cleaned/{lang}/{source}/{split}/."""
     return base / CLEANED_DIR / lang / source / split
 
 
 def cleaned_split_dir(base: Path, split: str) -> Path:
-    """Старый общий путь (для обратной совместимости)."""
     return base / CLEANED_DIR / split
 
 
@@ -77,3 +75,7 @@ def run_manifest_path(base: Path, run_id: str) -> Path:
 
 def dropped_samples_dir(base: Path, lang: str) -> Path:
     return base / CLEANED_DIR / "dropped_samples" / lang
+
+
+def tokenized_source_split_dir(base: Path, lang: str, source: str, split: str) -> Path:
+    return base / TOKENIZED_DIR / lang / source / split
