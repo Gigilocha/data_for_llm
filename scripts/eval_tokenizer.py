@@ -1,11 +1,6 @@
-import sys
 import io
 import json
 from pathlib import Path
-
-if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 from transformers import PreTrainedTokenizerFast
 from datasets import load_dataset
@@ -34,7 +29,8 @@ def main():
     logger.info("Загрузка тестовых текстов из %s...", sample_path)
     ds = load_dataset("parquet", data_files=str(sample_path), split="train")
     # Берем первые 100 текстов для оценки (чтобы не гонять всё)
-    test_texts = [row["text"] for row in ds.take(100)]
+    num_samples = min(100, len(ds))
+    test_texts = [row["text"] for row in ds.take(num_samples)]
     
     logger.info("Запуск оценки...")
     metrics = evaluate_tokenizer(tokenizer, test_texts)

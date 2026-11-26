@@ -8,8 +8,9 @@ from common.paths import cleaned_source_split_dir
 
 logger = get_logger(__name__)
 
+
+# Читает parquet батчами и отдает по одному документу.
 def _read_source_docs(base_dir: Path, lang: str, source: str) -> Iterator[dict]:
-    """Читает parquet батчами и отдает по одному документу."""
     path = cleaned_source_split_dir(base_dir, lang, source, "train")
     if not path.exists():
         return
@@ -20,14 +21,15 @@ def _read_source_docs(base_dir: Path, lang: str, source: str) -> Iterator[dict]:
             yield row
 
 
+'''
+Собирает срез для токенизатора.
+Читает cleaned/{lang}/{source}/train/, берет целые документы.
+'''
 def build_tokenizer_sample(
     config,
     output_dir: Path,
 ) -> list[str]:
-    """
-    Собирает срез для токенизатора.
-    Читает cleaned/{lang}/{source}/train/, берет целые документы.
-    """
+   
     total_chars = config.tokenizer.sample_chars
     languages_cfg = config.data.languages
     seed = config.data.seed
