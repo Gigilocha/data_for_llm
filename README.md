@@ -4,68 +4,68 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE.txt)
 [![uv](https://img.shields.io/badge/package%20manager-uv-black)](https://github.com/astral-sh/uv)
 
-Профессиональный, воспроизводимый и масштабируемый пайплайн для подготовки данных обучения больших языковых моделей (LLM).  
-От сырых текстов до оптимизированного бинарного датасета с полным контролем над пропорциями языков, источников и токенов.
+A professional, reproducible, and scalable data preparation pipeline for training Large Language Models (LLMs).  
+From raw text to an optimized binary dataset with full control over language ratios, data sources, and token budgets.
 
-## Цель проекта
+## Project Goal
 
-Получить **полный контроль над данными** для обучения LLM. Пайплайн позволяет из открытых или локальных источников собрать единый очищенный датасет, обучить под него кастомный токенизатор и сформировать итоговый плоский (flat) датасет с гарантированным соблюдением токеновых квот.
+To achieve **complete control over training data** for LLMs. The pipeline enables assembling a unified, cleaned dataset from open or local sources, training a custom tokenizer tailored to it, and building the final flat dataset with strict adherence to token quotas.
 
-Весь процесс воспроизводим, задокументирован и поддерживается манифестами с хэшами.
+The entire workflow is reproducible, well-documented, and backed by hash-verified manifests.
 
-> **Философия:** При ограниченном размере модели (например, 126M–1B параметров) качество данных важнее их количества. Этот пайплайн реализует принцип «мысль → код» без слепого копирования, с использованием лучших практик индустрии.
-
----
-
-## Ключевые особенности
-
-- **Идемпотентность** — каждый этап проверяет хэши входных данных и конфигурации. Если ничего не изменилось, этап пропускается.
-- **Эффективность памяти** — потоковая обработка с использованием PyArrow и Parquet. Потребление памяти ограничено размером батча.
-- **Точный контроль пропорций** — Weighted Round-Robin + ShuffleBuffer гарантируют, что итоговый датасет точно соответствует заданным пропорциям.
-- **Строгий контроль бюджета** — сборка останавливается при достижении `target_tokens`.
-- **Детальная телеметрия** — на каждом этапе генерируется `manifest.json` со статистикой.
-- **Кроссплатформенность** — корректная работа с UTF-8 (включая Windows).
+> **Philosophy:** At constrained model scales (e.g., 126M–1B parameters), data quality matters far more than sheer quantity. This pipeline follows a "thought → code" principle—built from first principles using industry best practices rather than blind copy-pasting.
 
 ---
 
-## Архитектура пайплайна
+## Key Features
 
-Пайплайн состоит из трёх независимых, но связанных этапов:
+- **Idempotency** — Every stage verifies hashes of input data and configurations. If nothing has changed, the stage is skipped.
+- **Memory Efficiency** — Streaming processing powered by PyArrow and Parquet keeps memory usage strictly bounded by batch size.
+- **Precise Ratio Control** — Weighted Round-Robin + ShuffleBuffer ensure the final dataset strictly matches target proportions.
+- **Strict Budget Enforcement** — Dataset assembly stops precisely upon reaching `target_tokens`.
+- **Detailed Telemetry** — Each stage generates a `manifest.json` containing comprehensive statistics and metadata.
+- **Cross-Platform Support** — Reliable UTF-8 handling across operating systems (including Windows).
+
+---
+
+## Pipeline Architecture
+
+The pipeline consists of three independent yet interconnected stages:
 
 ```mermaid
 graph TD
     subgraph S1["Stage 1: RAW → CLEAN"]
-        A1["Источники: JSONL / Parquet"] --> A2("Загрузка с лимитами и seed")
-        A2 --> A3{"Профиль очистки"}
-        A3 -->|"Проза"| A4["Нормализация, эвристики качества"]
-        A3 -->|"Код"| A5["Специальные правила для кода"]
-        A4 --> A6["Глобальная дедупликация по хэшу"]
+        A1["Sources: JSONL / Parquet"] --> A2("Load with limits & seed")
+        A2 --> A3{"Cleaning Profile"}
+        A3 -->|"Prose"| A4["Normalization, quality heuristics"]
+        A3 -->|"Code"| A5["Code-specific cleaning rules"]
+        A4 --> A6["Global hash-based deduplication"]
         A5 --> A6
-        A6 --> A7[("CLEAN: Parquet шарды")]
+        A6 --> A7[("CLEAN: Parquet shards")]
         A7 -.-> M1["manifest_clean.json"]
     end
 
     subgraph S2["Stage 2: CLEAN → TOKENIZER"]
-        A7 --> B1["Стратифицированный срез данных"]
-        B1 --> B2("Обучение BPE токенизатора")
-        B2 --> B3{"Оценка: round-trip, fertility, сжатие"}
+        A7 --> B1["Stratified data slice"]
+        B1 --> B2("Train BPE tokenizer")
+        B2 --> B3{"Evaluation: round-trip, fertility, compression"}
         B3 --> B4[("Tokenizer: model.json")]
         B4 -.-> M2["manifest_tokenizer.json"]
     end
 
     subgraph S3["Stage 3: CLEAN + TOKENIZER → FINAL DATASET"]
-        A7 --> C1["Потоковая токенизация документов"]
+        A7 --> C1["Streaming document tokenization"]
         B4 --> C1
         C1 --> C2{"Weighted Round-Robin + ShuffleBuffer"}
-        C2 --> C3["Сборка в flat binary: data.bin + index.parquet"]
-        C3 --> C4["Разделение train / val по хэшу ID"]
-        C4 --> C5[("FINAL: Готовый датасет")]
+        C2 --> C3["Build flat binary: data.bin + index.parquet"]
+        C3 --> C4["Hash-based train / val split by ID"]
+        C4 --> C5[("FINAL: Ready dataset")]
         C5 -.-> M3["manifest_dataset.json"]
     end
 
-    M1 -. "Идемпотентность: пропуск при совпадении хэшей" .-> S1
-    M2 -. "Идемпотентность" .-> S2
-    M3 -. "Идемпотентность" .-> S3
+    M1 -. "Idempotency: skip on matching hashes" .-> S1
+    M2 -. "Idempotency" .-> S2
+    M3 -. "Idempotency" .-> S3
 
     classDef artifact fill:#d4edda,stroke:#28a745,stroke-width:2px;
     classDef manifest fill:#fff3cd,stroke:#ffc107,stroke-width:2px,stroke-dasharray: 4 2;
@@ -75,21 +75,21 @@ graph TD
 
 ---
 
-# Структура проекта
+# Project Structure
 ```
 data_for_llm/
-├── configs/                # YAML-конфигурации (источники, пропорции, лимиты)
-├── scripts/                # Точки входа (CLI)
-│   ├── pipeline.py         # Главный оркестратор
+├── configs/                # YAML configurations (sources, ratios, limits)
+├── scripts/                # CLI entry points
+│   ├── pipeline.py         # Main orchestrator
 │   ├── tokenize_cleaned.py
 │   └── build_final_dataset.py
 ├── src/
-│   ├── common/             # Утилиты (config, logger, paths)
-│   ├── dataset/            # Ядро работы с данными
+│   ├── common/             # Utilities (config, logger, paths)
+│   ├── dataset/            # Core data processing
 │   │   ├── io/
 │   │   ├── cleaning/
 │   │   └── sampling/
-│   └── tokenizer/          # Обучение и валидация токенизатора
+│   └── tokenizer/          # Tokenizer training and validation
 ├── tests/
 ├── .env.example
 ├── pyproject.toml
@@ -98,7 +98,7 @@ data_for_llm/
 
 ---
 
-# Установка
+# Installation
 ```
 git clone https://github.com/Gigilocha/data_for_llm.git
 cd data_for_llm
@@ -107,37 +107,37 @@ uv sync
 cp .env.example .env
 ```
 
-### Отредактируйте файлы в configs/ под свои источники данных, пропорции и токеновые бюджеты.
+### Edit the files in configs/ to match your data sources, proportions, and token budgets.
 
 ---
 
-# Использование
+# Usage
 
-### Полный цикл
+### Full Pipeline
 ```
 uv run scripts/pipeline.py --stage all
 ```
 
-### Отдельные этапы
+### Individual Stages
 ```
-# Этап 1: Очистка и дедупликация
+# Stage 1: Cleaning and deduplication
 uv run scripts/pipeline.py --stage cleaned
 
-# Этап 2: Обучение токенизатора
+# Stage 2: Tokenizer training
 uv run scripts/pipeline.py --stage tokenizer
 
-# Этап 3: Токенизация и сборка финального датасета
+# Stage 3: Tokenization and final dataset assembly
 uv run scripts/pipeline.py --stage final
 ```
 
 ---
 
-# Выходные данные
+# Outputs
 ```
 output/
-├── cleaned/          # Очищенные тексты (parquet)
+├── cleaned/          # Cleaned texts (parquet)
 ├── tokenizer/        # tokenizer.json + manifest.json
-├── tokenized/        # Тексты в виде токенов (parquet)
+├── tokenized/        # Tokenized texts (parquet)
 └── dataset/
     ├── train/
     │   ├── data.bin
@@ -148,37 +148,37 @@ output/
 
 ---
 
-# Ключевые концепции
+# Key Concepts
 
-| Концепция | Описание |
+| Concept | Concept |
 | --- | --- |
-| Бюджет в символах | На этапе очистки набираем тексты в символах (target_tokens × share × chars_per_token × overshoot) |
-| Бюджет в токенах | На этапе сборки набираем ровно target_tokens × share токенов |
-| Weighted Round-Robin | Берём документ из того языка/источника, который сильнее всего отстаёт от бюджета |
-| ShuffleBuffer | Накапливает документы, перемешивает и отдаёт пачками (не разрывая документы) |
-| BOS / EOS | Каждый документ оборачивается в <\|bos\|> и <\|eos\|> |
+| Character Budget | During the cleaning stage, text is collected based on character count (target_tokens × share × chars_per_token × overshoot)|
+| Token Budget | During the assembly stage, exactly target_tokens × share tokens are collected |
+| Weighted Round-Robin | Selects the next document from whichever language/source is furthest behind its target budget |
+| ShuffleBuffer | Accumulates documents, shuffles them, and yields batches without splitting individual documents|
+| BOS / EOS | Every document is wrapped in <|bos|> and <|eos|> tokens |
 
 ---
 
-# Тестирование
+# Testing
 ```
-# Быстрые unit-тесты
+# Fast unit tests
 pytest -m unit
 
-# Все тесты
+# All tests
 pytest
 ```
 
 ---
 
-# Лицензия
+# License
 
 MIT
 
 ---
 
-# Автор
+# Author
 
-Проект развивается в рамках самостоятельного изучения ML/LLM Engineering.Каждый компонент реализован с пониманием «почему именно так» — без слепого копирования.
+This project is developed as part of an independent deep dive into ML/LLM Engineering. Every component is implemented with a clear understanding of the "why" behind each design choice—without blind copy-pasting.
 
-Telegram: [t.me/Gigilocha](https://t.me/Gigilocha)
+Telegram: t.me/Gigilocha
